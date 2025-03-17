@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter
+CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Ofast -march=native
 LDFLAGS=
 
 TARGETS=demo headless
@@ -15,7 +15,7 @@ headless: headless.o $(COMMON_OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 clean:
-	rm -f $(TARGETS) *.o .depend *~
+	rm -f $(TARGETS) *.o .depend *~ *-headless
 
 .depend: *.[ch]
 	$(CC) -MM $(SOURCES) >.depend
