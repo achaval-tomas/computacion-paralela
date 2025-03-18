@@ -187,7 +187,7 @@ int main(int argc, char** argv)
         one_step();
     }
     double total_us = 1.0e6 * (wtime() - start_t);
-    printf("cells_per_us: %lf", (double)(2048 * (N + 2) * (N + 2)) / total_us);
+    printf("cells_per_us: %lf\n", (double)(2048 * (N + 2) * (N + 2)) / total_us);
 
     free_data();
 
