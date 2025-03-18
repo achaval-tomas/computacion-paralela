@@ -1,4 +1,4 @@
-demo
-headless
+*demo
+*headless
 .depend
 *.o

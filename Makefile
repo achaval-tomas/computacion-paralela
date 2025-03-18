@@ -19,13 +19,13 @@ all-clang: CFLAGS=$(CLANG_CFLAGS)
 all-clang: $(TARGETS)
 
 demo: demo.o $(COMMON_OBJECTS)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) -lGL -lGLU -lglut
+	$(CC) $(CFLAGS) $^ -o $(CC)-$@ $(LDFLAGS) -lGL -lGLU -lglut
 
 headless: headless.o $(COMMON_OBJECTS)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $^ -o $(CC)-$@ $(LDFLAGS)
 
 clean:
-	rm -f $(TARGETS) *.o .depend *~ *-headless
+	rm -f $(addprefix *, $(TARGETS)) *.o *~ .depend
 
 .depend: *.[ch]
 	$(CC) -MM $(SOURCES) >.depend
