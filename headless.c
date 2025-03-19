@@ -127,13 +127,20 @@ static void react(float* d, float* u, float* v)
     return;
 }
 
-static void one_step(void)
+
+static void one_step(double* data)
 {
+    double start_t = wtime();
     react(dens_prev, u_prev, v_prev);
+    data[0] += (double)(N * N) / (1.0e6 * (wtime() - start_t));
 
+    start_t = wtime();
     vel_step(N, u, v, u_prev, v_prev, visc, dt);
+    data[1] += (double)(N * N) / (1.0e6 * (wtime() - start_t));
 
+    start_t = wtime();
     dens_step(N, dens, dens_prev, u, v, diff, dt);
+    data[2] += (double)(N * N) / (1.0e6 * (wtime() - start_t));
 }
 
 
@@ -182,12 +189,22 @@ int main(int argc, char** argv)
     }
     clear_data();
 
-    double start_t = wtime();
+    double* results = calloc(3, sizeof(double));
     for (i = 0; i < 2048; i++) {
-        one_step();
+        one_step(results);
     }
-    double total_us = 1.0e6 * (wtime() - start_t);
-    printf("cells_per_us: %lf\n", (double)(2048 * (N + 2) * (N + 2)) / total_us);
+
+    printf("\n"
+           "react_cells_per_us: %lf\n"
+           "vel_cells_per_us: %lf\n"
+           "dens_cells_per_us: %lf\n"
+           "total_cells_per_us: %lf\n",
+           results[0] / (double)2048,
+           results[1] / (double)2048,
+           results[2] / (double)2048,
+           (results[0] + results[1] + results[2]) / (double)2048);
+
+    free(results);
 
     free_data();
 
