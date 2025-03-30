@@ -127,7 +127,8 @@ static void react(float* d, float* u, float* v)
     return;
 }
 
-static void one_step(void)
+
+static void one_step()
 {
     react(dens_prev, u_prev, v_prev);
 
@@ -182,12 +183,15 @@ int main(int argc, char** argv)
     }
     clear_data();
 
-    double start_t = wtime();
+    double start_t;
+    double total = 0;
     for (i = 0; i < 2048; i++) {
+        start_t = wtime();
         one_step();
+        total += (double)(3 * N * N) / (1.0e6 * (wtime() - start_t));
     }
-    double total_us = 1.0e6 * (wtime() - start_t);
-    printf("cells_per_us: %lf\n", (double)(2048 * (N + 2) * (N + 2)) / total_us);
+
+    printf("\ntotal_cells_per_us: %lf\n", total / (double)2048);
 
     free_data();
 

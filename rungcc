@@ -1,2 +1,2 @@
 #!/bin/bash
-make clean && make all-gcc && time ./gcc-headless
+make clean && make all-gcc && time ./gcc-headless $@

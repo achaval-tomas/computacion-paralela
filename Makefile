@@ -30,6 +30,12 @@ clean:
 .depend: *.[ch]
 	$(CC) -MM $(SOURCES) >.depend
 
+sgemm:
+	gcc -o time_sgemm time_sgemm.c -lopenblas
+
+dgemm:
+	gcc -o time_dgemm time_dgemm.c -lopenblas
+
 -include .depend
 
 .PHONY: clean all
