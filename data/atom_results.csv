@@ -1,0 +1,16 @@
+Compiler,N,total_cells_per_us
+./rungcc,64,5.894515
+./rungcc,128,5.306664
+./rungcc,256,4.923522
+./rungcc,512,4.670891
+./rungcc,1024,2.68044
+./runclang,64,8.379315
+./runclang,128,7.557388
+./runclang,256,7.024
+./runclang,512,6.606583
+./runclang,1024,4.538902
+./runintel,64,5.805786
+./runintel,128,5.269772
+./runintel,256,4.955989
+./runintel,512,4.699494
+./runintel,1024,2.844828

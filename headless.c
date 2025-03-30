@@ -127,25 +127,14 @@ static void react(float* d, float* u, float* v)
     return;
 }
 
-typedef struct {
-    double r_cells_p_us;
-    double v_cells_p_us;
-    double d_cells_p_us;
-} info;
 
-static void one_step(info* data)
+static void one_step()
 {
-    double start_t = wtime();
     react(dens_prev, u_prev, v_prev);
-    data->r_cells_p_us += (double)(N * N) / (1.0e6 * (wtime() - start_t));
 
-    start_t = wtime();
     vel_step(N, u, v, u_prev, v_prev, visc, dt);
-    data->v_cells_p_us += (double)(N * N) / (1.0e6 * (wtime() - start_t));
 
-    start_t = wtime();
     dens_step(N, dens, dens_prev, u, v, diff, dt);
-    data->d_cells_p_us += (double)(N * N) / (1.0e6 * (wtime() - start_t));
 }
 
 
@@ -194,22 +183,15 @@ int main(int argc, char** argv)
     }
     clear_data();
 
-    info* res = calloc(1, sizeof(info));
+    double start_t;
+    double total = 0;
     for (i = 0; i < 2048; i++) {
-        one_step(res);
+        start_t = wtime();
+        one_step();
+        total += (double)(3 * N * N) / (1.0e6 * (wtime() - start_t));
     }
 
-    printf("\n"
-           "react_cells_per_us: %lf\n"
-           "vel_cells_per_us: %lf\n"
-           "dens_cells_per_us: %lf\n"
-           "total_cells_per_us: %lf\n",
-           res->r_cells_p_us / (double)2048,
-           res->v_cells_p_us / (double)2048,
-           res->d_cells_p_us / (double)2048,
-           (res->r_cells_p_us + res->v_cells_p_us + res->d_cells_p_us) / (double)2048);
-
-    free(res);
+    printf("\ntotal_cells_per_us: %lf\n", total / (double)2048);
 
     free_data();
 

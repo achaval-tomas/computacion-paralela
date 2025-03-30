@@ -3,12 +3,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # Load data
-input_file = "benchmark_results.csv"
+input_file = "atom_results.csv"
 df = pd.read_csv(input_file)
 
 # Plot results
 plt.figure(figsize=(10, 6))
-for metric in ["react_cells_per_us", "vel_cells_per_us", "dens_cells_per_us", "total_cells_per_us"]:
+for metric in ["total_cells_per_us"]:
     for compiler in df["Compiler"].unique():
         subset = df[df["Compiler"] == compiler]
         plt.plot(subset["N"], subset[metric], marker='o', linestyle='-', label=f"{compiler} - {metric}")
