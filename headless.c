@@ -19,6 +19,10 @@
 
 #include "wtime.h"
 
+#ifndef N_VALUE
+#define N_VALUE 128
+#endif
+
 /* macros */
 
 #define IX(i, j) ((i) + (N + 2) * (j))
