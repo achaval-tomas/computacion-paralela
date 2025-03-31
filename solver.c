@@ -38,13 +38,13 @@ static void set_bnd(unsigned int n, boundary b, float* x)
 
 static void lin_solve(unsigned int n, boundary b, float* x, const float* x0, float a, float c)
 {
-    unsigned int n_blocks = n / 16;
+    unsigned int n_blocks = n / 8;
 
     for (unsigned int k = 0; k < 20; k++) {
         for (unsigned int i_block = 0; i_block < n_blocks; i_block++) {
             for (unsigned int j_block = 0; j_block < n_blocks; j_block++) {
-                for (unsigned int i = i_block*16+1; i <= i_block*16+16; i++) {
-                    for (unsigned int j = j_block*16+1; j <= j_block*16+16; j++) {
+                for (unsigned int i = i_block*8+1; i <= i_block*8+8; i++) {
+                    for (unsigned int j = j_block*8+1; j <= j_block*8+8; j++) {
                         x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
                     }
                 }
