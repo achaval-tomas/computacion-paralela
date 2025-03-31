@@ -25,12 +25,16 @@
 
 /* external definitions (from solver.c) */
 
+#ifndef N_VALUE
+#define N_VALUE 128
+#endif
+
 extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
 extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt);
 
 /* global variables */
 
-static int N;
+static int N = N_VALUE;
 static float dt, diff, visc;
 static float force, source;
 
@@ -148,7 +152,7 @@ int main(int argc, char** argv)
 {
     int i = 0;
 
-    if (argc != 1 && argc != 7) {
+    if (argc != 1 && argc != 6) {
         fprintf(stderr, "usage : %s N dt diff visc force source\n", argv[0]);
         fprintf(stderr, "where:\n");
         fprintf(stderr, "\t N      : grid resolution\n");
@@ -161,7 +165,6 @@ int main(int argc, char** argv)
     }
 
     if (argc == 1) {
-        N = 128;
         dt = 0.1f;
         diff = 0.0f;
         visc = 0.0f;
@@ -170,12 +173,11 @@ int main(int argc, char** argv)
         fprintf(stderr, "Using defaults : N=%d dt=%g diff=%g visc=%g force = %g source=%g\n",
                 N, dt, diff, visc, force, source);
     } else {
-        N = atoi(argv[1]);
-        dt = atof(argv[2]);
-        diff = atof(argv[3]);
-        visc = atof(argv[4]);
-        force = atof(argv[5]);
-        source = atof(argv[6]);
+        dt = atof(argv[1]);
+        diff = atof(argv[2]);
+        visc = atof(argv[3]);
+        force = atof(argv[4]);
+        source = atof(argv[5]);
     }
 
     if (!allocate_data()) {
