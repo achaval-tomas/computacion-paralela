@@ -24,8 +24,11 @@ demo: demo.o $(COMMON_OBJECTS)
 headless: headless.o $(COMMON_OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $(CC)-$@ $(LDFLAGS)
 
+test: test.c
+	clang -O1 -ffast-math  -march=znver3 -ftree-vectorize  -Rpass=.* -Rpass-missed=.* test.c -S
+
 clean:
-	rm -f $(addprefix *, $(TARGETS)) *.o *~ .depend
+	rm -f $(addprefix *, $(TARGETS)) *.o *~ .depend *.s
 
 .depend: *.[ch]
 	$(CC) -MM $(SOURCES) >.depend
