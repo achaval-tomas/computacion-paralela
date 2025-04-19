@@ -49,10 +49,10 @@ static void lin_solve_red_step(unsigned int n,
                                            neigh[index + width])) / c;
     }
 
-    for (unsigned int k = 1; k < width - 1; ++k) {
-        for (unsigned int i = 1; i <= n; ++i) {
-            unsigned int index = (n+2) * k + i;
-            int shift = 1 - 2*(i <= n/2);
+    for (unsigned int k = 0; k < width - 2; ++k) {
+        for (unsigned int i = 0; i < n; ++i) {
+            unsigned int index = (n+2) * (k + 1) + i + 1;
+            int shift = 1 - 2*(i < n/2);
             same[index] = (same0[index] + a * (neigh[index - width] +
                                                neigh[index] +
                                                neigh[index + shift] +
@@ -60,8 +60,8 @@ static void lin_solve_red_step(unsigned int n,
         }
     }
 
-    for (unsigned int i = 1; i <= n/2; ++i) {
-        unsigned int index = (n+2) * (width - 1) + i;
+    for (unsigned int i = 0; i < n/2; ++i) {
+        unsigned int index = (n+2) * (width - 1) + i + 1;
         int shift = -1;
         same[index] = (same0[index] + a * (neigh[index - width] +
                                            neigh[index] +
