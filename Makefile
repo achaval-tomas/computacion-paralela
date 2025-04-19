@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Ofast -march=native
 GCC_CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Ofast -march=native
-CLANG_CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -O3 -ffast-math -march=native
+CLANG_CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -O3 -ffast-math -ftree-vectorize -funroll-loops -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -march=native
 LDFLAGS=
 
 TARGETS=demo headless
