@@ -27,6 +27,9 @@ headless: headless.o $(COMMON_OBJECTS)
 test: test.c
 	clang -O1 -ffast-math  -march=znver3 -ftree-vectorize  -Rpass=.* -Rpass-missed=.* test.c -S
 
+test-rb: test-rb.c
+	clang -O1 -ffast-math  -march=znver3 -ftree-vectorize  -Rpass=.* -Rpass-missed=.* test-rb.c -S
+
 clean:
 	rm -f $(addprefix *, $(TARGETS)) *.o *~ .depend *.s
 
