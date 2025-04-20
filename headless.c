@@ -17,8 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "wtime.h"
 #include "indices.h"
+#include "wtime.h"
 
 #ifndef N_VALUE
 #define N_VALUE 128
@@ -26,7 +26,7 @@
 
 /* macros */
 
-#define IX(x,y) (rb_idx((x),(y),(N+2)))
+#define IX(x, y) (rb_idx((x), (y), (N + 2)))
 
 /* external definitions (from solver.c) */
 

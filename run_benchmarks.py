@@ -18,7 +18,7 @@ data = []
 for compiler in compilers:
     for N in n_values:
         try:
-            result = subprocess.run([compiler, str(N), str(0.1), str(0.0), str(0.0), str(5.0), str(100.0)], capture_output=True, text=True, check=True)
+            result = subprocess.run([compiler, str(N)], capture_output=True, text=True, check=True)
             match = pattern.search(result.stdout)
             if match:
                 total_cells = float(match.group(1))

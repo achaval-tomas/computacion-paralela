@@ -1,1 +1,1 @@
-scp -r . cp2025_0$@@atom.famaf.unc.edu.ar:navier-stokes <&0
+scp * cp2025_0$@@atom.famaf.unc.edu.ar:navier-stokes <&0

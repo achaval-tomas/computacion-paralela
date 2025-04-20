@@ -1,2 +1,2 @@
 #!/bin/bash
-make clean && make all-clang && time ./clang-headless $@
+make clean && make all-clang N=$@ && time ./clang-headless

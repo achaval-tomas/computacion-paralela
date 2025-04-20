@@ -1,4 +1,4 @@
 #!/bin/bash
 source /opt/intel/oneapi/setvars.sh
-icx -fast -O3 headless.c solver.c wtime.c -o intel-headless
-time ./intel-headless $@
+icx -fast -O3 headless.c solver.c wtime.c -o intel-headless -DN_VALUE=$@
+time ./intel-headless
