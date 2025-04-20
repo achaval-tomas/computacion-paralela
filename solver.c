@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stddef.h>
 
 #include "solver.h"
@@ -150,6 +151,40 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
     set_bnd(n, NONE, p);
 
     lin_solve(n, NONE, p, div, 1, 4);
+
+
+    /*/-----------------------------
+    unsigned int color_size = (n + 2) * ((n + 2) / 2);
+    float * u_red = u;
+    float * u_black = u + color_size;
+    float * v_red = v;
+    float * v_black = v + color_size;
+    const float * p_red = p;
+    const float * p_black = p + color_size;
+
+    unsigned int width = (n + 2) / 2;
+
+    for (unsigned int y = 1; y <= n; ++y) {
+        for (unsigned int x = 0; x < n/2; ++x) {
+            int index = idx(x + ((y + 1) % 2), y, width);
+            int shift = 1 - 2 * ((y + 1) % 2);
+            u_red[index] -= 0.5f * n * (p_black[index] - p_black[index + shift]);
+            v_red[index] -= 0.5f * n * (p_black[index + width] + p_black[index - width]);
+        }
+    }
+
+    printf("AAAAAAA");
+
+    for (unsigned int y = 1; y <= n; ++y) {
+        for (unsigned int x = 0; x < n/2; ++x) {
+            int index = idx(x + (y % 2), y, width);
+            int shift = 1 - 2 * (y % 2);
+            u_black[index] -= 0.5f * n * (p_red[index] + p_red[index + shift]);
+            v_black[index] -= 0.5f * n * (p_red[index + width] + p_red[index - width]);
+        }
+    }
+    *///-----------------------------
+
 
     for (unsigned int i = 1; i <= n; i++) {
         for (unsigned int j = 1; j <= n; j++) {
