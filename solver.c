@@ -147,12 +147,18 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
 	float * d_red = d;
 	float * d_black = d + color_size;
 
+    unsigned int width = (n+2) / 2;
+
     for (unsigned int y_index = 1; y_index <= n; ++y_index) {
         for (unsigned int x_index = 0; x_index < n/2; ++x_index) {
-            int index = idx(x_index + ((y_index + 1) % 2), y_index, (n+2)/2);
+            int index = idx(x_index + ((y_index + 1) % 2), y_index, width);
 
-            x = y_index - dt0 * u_red[index];
-            y = x_index - dt0 * v_red[index];
+            int index_not_rb = index * 2 + (y_index % 2);
+            int i = index_not_rb / (n+2);
+            int j = index_not_rb % (n+2);
+
+            x = i - dt0 * u_red[IX(i, j)];
+            y = j - dt0 * v_red[IX(i, j)];
             if (x < 0.5f) {
                 x = 0.5f;
             } else if (x > n + 0.5f) {
@@ -172,22 +178,21 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
             t1 = y - j0;
             t0 = 1 - t1;
 
-            int index1 = idx(i0 + ((j0 + 1) % 2), j0, (n+2)/2);
-            int index2 = idx(i0 + ((j1 + 1) % 2), j1, (n+2)/2);
-            int index3 = idx(i1 + ((j0 + 1) % 2), j0, (n+2)/2);
-            int index4 = idx(i1 + ((j1 + 1) % 2), j1, (n+2)/2);
-
-            d_red[index] = s0 * (t0 * d0_red[index1] + t1 * d0_red[index2]) +
-                           s1 * (t0 * d0_red[index3] + t1 * d0_red[index4]);
+            d_red[IX(i, j)] = s0 * (t0 * d0_red[IX(i0, j0)] + t1 * d0_red[IX(i0, j1)]) +
+                           s1 * (t0 * d0_red[IX(i1, j0)] + t1 * d0_red[IX(i1, j1)]);
         }
     }
 
     for (unsigned int y_index = 1; y_index <= n; ++y_index) {
         for (unsigned int x_index = 0; x_index < n/2; ++x_index) {
-            int index = idx(x_index + (y_index % 2), y_index, (n+2)/2);
+            int index = idx(x_index + (y_index % 2), y_index, width);
 
-            x = y_index + (n+2)/2 - dt0 * u_black[index];
-            y = x_index - dt0 * v_black[index];
+            int index_not_rb = 2 * index + ((y_index + 1) % 2);
+            int i = index_not_rb / (n+2);
+            int j = index_not_rb % (n+2);
+
+            x = i - dt0 * u_red[IX(i, j)];
+            y = j - dt0 * v_red[IX(i, j)];
             if (x < 0.5f) {
                 x = 0.5f;
             } else if (x > n + 0.5f) {
@@ -207,13 +212,8 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
             t1 = y - j0;
             t0 = 1 - t1;
 
-            int index1 = idx(i0 + (j0 % 2), j0, (n+2)/2);
-            int index2 = idx(i0 + (j1 % 2), j1, (n+2)/2);
-            int index3 = idx(i1 + (j0 % 2), j0, (n+2)/2);
-            int index4 = idx(i1 + (j1 % 2), j1, (n+2)/2);
-
-            d_black[index] = s0 * (t0 * d0_black[index1] + t1 * d0_black[index2]) +
-                           s1 * (t0 * d0_black[index3] + t1 * d0_black[index4]);
+            d_red[IX(i, j)] = s0 * (t0 * d0_red[IX(i0, j0)] + t1 * d0_red[IX(i0, j1)]) +
+                           s1 * (t0 * d0_red[IX(i1, j0)] + t1 * d0_red[IX(i1, j1)]);
         }
     }
 
