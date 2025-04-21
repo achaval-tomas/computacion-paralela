@@ -109,7 +109,6 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
 
     float dt0 = dt * n;
 
-	/*
     for (unsigned int i = 1; i <= n; i++) {
         for (unsigned int j = 1; j <= n; j++) {
             x = i - dt0 * u[IX(i, j)];
@@ -134,86 +133,6 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
             t0 = 1 - t1;
             d[IX(i, j)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
                           s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
-        }
-    }
-	*/
-    unsigned int color_size = (n + 2) * ((n + 2) / 2);
-	const float * u_red = u;
-	const float * u_black = u + color_size;
-	const float * v_red = v;
-	const float * v_black = v + color_size;
-	const float * d0_red = d0;
-	const float * d0_black = d0 + color_size;
-	float * d_red = d;
-	float * d_black = d + color_size;
-
-    unsigned int width = (n+2) / 2;
-
-    for (unsigned int y_index = 1; y_index <= n; ++y_index) {
-        for (unsigned int x_index = 0; x_index < n/2; ++x_index) {
-            int index = idx(x_index + ((y_index + 1) % 2), y_index, width);
-
-            int index_not_rb = index * 2 + (y_index % 2);
-            int i = index_not_rb / (n+2);
-            int j = index_not_rb % (n+2);
-
-            x = i - dt0 * u_red[IX(i, j)];
-            y = j - dt0 * v_red[IX(i, j)];
-            if (x < 0.5f) {
-                x = 0.5f;
-            } else if (x > n + 0.5f) {
-                x = n + 0.5f;
-            }
-            i0 = (int) x;
-            i1 = i0 + 1;
-            if (y < 0.5f) {
-                y = 0.5f;
-            } else if (y > n + 0.5f) {
-                y = n + 0.5f;
-            }
-            j0 = (int) y;
-            j1 = j0 + 1;
-            s1 = x - i0;
-            s0 = 1 - s1;
-            t1 = y - j0;
-            t0 = 1 - t1;
-
-            d_red[IX(i, j)] = s0 * (t0 * d0_red[IX(i0, j0)] + t1 * d0_red[IX(i0, j1)]) +
-                           s1 * (t0 * d0_red[IX(i1, j0)] + t1 * d0_red[IX(i1, j1)]);
-        }
-    }
-
-    for (unsigned int y_index = 1; y_index <= n; ++y_index) {
-        for (unsigned int x_index = 0; x_index < n/2; ++x_index) {
-            int index = idx(x_index + (y_index % 2), y_index, width);
-
-            int index_not_rb = 2 * index + ((y_index + 1) % 2);
-            int i = index_not_rb / (n+2);
-            int j = index_not_rb % (n+2);
-
-            x = i - dt0 * u_red[IX(i, j)];
-            y = j - dt0 * v_red[IX(i, j)];
-            if (x < 0.5f) {
-                x = 0.5f;
-            } else if (x > n + 0.5f) {
-                x = n + 0.5f;
-            }
-            i0 = (int) x;
-            i1 = i0 + 1;
-            if (y < 0.5f) {
-                y = 0.5f;
-            } else if (y > n + 0.5f) {
-                y = n + 0.5f;
-            }
-            j0 = (int) y;
-            j1 = j0 + 1;
-            s1 = x - i0;
-            s0 = 1 - s1;
-            t1 = y - j0;
-            t0 = 1 - t1;
-
-            d_red[IX(i, j)] = s0 * (t0 * d0_red[IX(i0, j0)] + t1 * d0_red[IX(i0, j1)]) +
-                           s1 * (t0 * d0_red[IX(i1, j0)] + t1 * d0_red[IX(i1, j1)]);
         }
     }
 
