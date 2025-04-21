@@ -109,32 +109,71 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
 
     float dt0 = dt * n;
 
+    unsigned int width = (n+2)/2;
+
     for (unsigned int j = 1; j <= n; j++) {
-            for (unsigned int i = 1; i <= n; i++) {
-                x = i - dt0 * u[IX(i, j)];
-                y = j - dt0 * v[IX(i, j)];
-                if (x < 0.5f) {
-                    x = 0.5f;
-                } else if (x > n + 0.5f) {
-                    x = n + 0.5f;
-                }
-                i0 = (int) x;
-                i1 = i0 + 1;
-                if (y < 0.5f) {
-                    y = 0.5f;
-                } else if (y > n + 0.5f) {
-                    y = n + 0.5f;
-                }
-                j0 = (int) y;
-                j1 = j0 + 1;
-                s1 = x - i0;
-                s0 = 1 - s1;
-                t1 = y - j0;
-                t0 = 1 - t1;
-                d[IX(i, j)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
-                              s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+        for (unsigned int i = 0; i < n/2; i++) {
+
+            unsigned int index = idx(i + ((j + 1) % 2), j ,width);
+
+            x = 2*i + 1 + ((j + 1) % 2) - dt0 * u[index];
+            y = j - dt0 * v[index];
+            if (x < 0.5f) {
+                x = 0.5f;
+            } else if (x > n + 0.5f) {
+                x = n + 0.5f;
             }
+            i0 = (int) x;
+            i1 = i0 + 1;
+            if (y < 0.5f) {
+                y = 0.5f;
+            } else if (y > n + 0.5f) {
+                y = n + 0.5f;
+            }
+            j0 = (int) y;
+            j1 = j0 + 1;
+            s1 = x - i0;
+            s0 = 1 - s1;
+            t1 = y - j0;
+            t0 = 1 - t1;
+            d[index] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
+                          s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
         }
+    }
+
+    const float * restrict u_black = u + width * (n+2);
+    const float * restrict v_black = v + width * (n+2);
+    float * restrict d_black = d + width * (n+2);
+
+    for (unsigned int j = 1; j <= n; j++) {
+        for (unsigned int i = 0; i < n/2; i++) {
+
+            unsigned int index = idx(i + (j % 2), j ,width);
+
+            x = 2*i + 1 + (j % 2) - dt0 * u_black[index];
+            y = j - dt0 * v_black[index];
+            if (x < 0.5f) {
+                x = 0.5f;
+            } else if (x > n + 0.5f) {
+                x = n + 0.5f;
+            }
+            i0 = (int) x;
+            i1 = i0 + 1;
+            if (y < 0.5f) {
+                y = 0.5f;
+            } else if (y > n + 0.5f) {
+                y = n + 0.5f;
+            }
+            j0 = (int) y;
+            j1 = j0 + 1;
+            s1 = x - i0;
+            s0 = 1 - s1;
+            t1 = y - j0;
+            t0 = 1 - t1;
+            d_black[index] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
+                          s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+        }
+    }
 
     set_bnd(n, b, d);
 }
