@@ -109,8 +109,8 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
 
     float dt0 = dt * n;
 
-    for (unsigned int i = 1; i <= n; i++) {
-        for (unsigned int j = 1; j <= n; j++) {
+	for (unsigned int j = 1; j <= n; j++) {
+		for (unsigned int i = 1; i <= n; i++) {
             x = i - dt0 * u[IX(i, j)];
             y = j - dt0 * v[IX(i, j)];
             if (x < 0.5f) {
@@ -141,8 +141,8 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
 
 static void project(unsigned int n, float * restrict u, float * restrict v, float * restrict p, float * restrict div)
 {
-    for (unsigned int i = 1; i <= n; i++) {
-        for (unsigned int j = 1; j <= n; j++) {
+	for (unsigned int j = 1; j <= n; j++) {
+		for (unsigned int i = 1; i <= n; i++) {
             div[IX(i, j)] = -0.5f * (u[IX(i + 1, j)] - u[IX(i - 1, j)] +
                                      v[IX(i, j + 1)] - v[IX(i, j - 1)]) / n;
             p[IX(i, j)] = 0;
