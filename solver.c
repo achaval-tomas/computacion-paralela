@@ -153,7 +153,6 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
     lin_solve(n, NONE, p, div, 1, 4);
 
 
-    /*/-----------------------------
     unsigned int color_size = (n + 2) * ((n + 2) / 2);
     float * u_red = u;
     float * u_black = u + color_size;
@@ -168,8 +167,8 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + ((y + 1) % 2), y, width);
             int shift = 1 - 2 * ((y + 1) % 2);
-            u_red[index] -= 0.5f * n * (p_black[index] - p_black[index + shift]);
-            v_red[index] -= 0.5f * n * (p_black[index + width] + p_black[index - width]);
+            u_red[index] -= 0.5f * n * (p_black[index] - p_black[index + shift]) * (-shift);
+            v_red[index] -= 0.5f * n * (p_black[index + width] - p_black[index - width]);
         }
     }
 
@@ -179,19 +178,20 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + (y % 2), y, width);
             int shift = 1 - 2 * (y % 2);
-            u_black[index] -= 0.5f * n * (p_red[index] + p_red[index + shift]);
-            v_black[index] -= 0.5f * n * (p_red[index + width] + p_red[index - width]);
+            u_black[index] -= 0.5f * n * (p_red[index] - p_red[index + shift]) * (-shift);
+            v_black[index] -= 0.5f * n * (p_red[index + width] - p_red[index - width]);
         }
     }
-    *///-----------------------------
 
 
+    /*
     for (unsigned int i = 1; i <= n; i++) {
         for (unsigned int j = 1; j <= n; j++) {
             u[IX(i, j)] -= 0.5f * n * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
             v[IX(i, j)] -= 0.5f * n * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
         }
     }
+    */
     set_bnd(n, VERTICAL, u);
     set_bnd(n, HORIZONTAL, v);
 }
