@@ -186,15 +186,20 @@ int main(int argc, char** argv)
     }
     clear_data();
 
+	double start_t_program = wtime();
     double start_t;
     double total = 0;
-    for (i = 0; i < 2048; i++) {
+	i = 0;
+	while (i < 2048) {
+		i++;
         start_t = wtime();
         one_step();
         total += (double)(3 * N * N) / (1.0e6 * (wtime() - start_t));
+		if (wtime() - start_t_program > 60)
+			break;	
     }
 
-    printf("\ntotal_cells_per_us: %lf\n", total / (double)2048);
+    printf("\ntotal_cells_per_us: %lf\n", total / (double)i);
 
     free_data();
 
