@@ -109,67 +109,32 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
 
     float dt0 = dt * n;
 
-	for (unsigned int j = 1; j <= n; j++) {
-		for (unsigned int i = 0; i < n/2; i++) {
-
-            unsigned int i_coordinate = 2*i + (j % 2) + 1;
-            unsigned int j_coordinate = j;
-
-            x = i_coordinate - dt0 * u[IX(i_coordinate, j_coordinate)];
-            y = j_coordinate - dt0 * v[IX(i_coordinate, j_coordinate)];
-            if (x < 0.5f) {
-                x = 0.5f;
-            } else if (x > n + 0.5f) {
-                x = n + 0.5f;
+    for (unsigned int j = 1; j <= n; j++) {
+            for (unsigned int i = 1; i <= n; i++) {
+                x = i - dt0 * u[IX(i, j)];
+                y = j - dt0 * v[IX(i, j)];
+                if (x < 0.5f) {
+                    x = 0.5f;
+                } else if (x > n + 0.5f) {
+                    x = n + 0.5f;
+                }
+                i0 = (int) x;
+                i1 = i0 + 1;
+                if (y < 0.5f) {
+                    y = 0.5f;
+                } else if (y > n + 0.5f) {
+                    y = n + 0.5f;
+                }
+                j0 = (int) y;
+                j1 = j0 + 1;
+                s1 = x - i0;
+                s0 = 1 - s1;
+                t1 = y - j0;
+                t0 = 1 - t1;
+                d[IX(i, j)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
+                              s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
             }
-            i0 = (int) x;
-            i1 = i0 + 1;
-            if (y < 0.5f) {
-                y = 0.5f;
-            } else if (y > n + 0.5f) {
-                y = n + 0.5f;
-            }
-            j0 = (int) y;
-            j1 = j0 + 1;
-            s1 = x - i0;
-            s0 = 1 - s1;
-            t1 = y - j0;
-            t0 = 1 - t1;
-            d[IX(i_coordinate, j_coordinate)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
-                          s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
         }
-    }
-
-	for (unsigned int j = 1; j <= n; j++) {
-		for (unsigned int i = 0; i < n/2; i++) {
-
-            unsigned int i_coordinate = 2*i + ((j + 1) % 2) + 1;
-            unsigned int j_coordinate = j;
-
-            x = i_coordinate - dt0 * u[IX(i_coordinate, j_coordinate)];
-            y = j_coordinate - dt0 * v[IX(i_coordinate, j_coordinate)];
-            if (x < 0.5f) {
-                x = 0.5f;
-            } else if (x > n + 0.5f) {
-                x = n + 0.5f;
-            }
-            i0 = (int) x;
-            i1 = i0 + 1;
-            if (y < 0.5f) {
-                y = 0.5f;
-            } else if (y > n + 0.5f) {
-                y = n + 0.5f;
-            }
-            j0 = (int) y;
-            j1 = j0 + 1;
-            s1 = x - i0;
-            s0 = 1 - s1;
-            t1 = y - j0;
-            t0 = 1 - t1;
-            d[IX(i_coordinate, j_coordinate)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
-                          s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
-        }
-    }
 
     set_bnd(n, b, d);
 }
