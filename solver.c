@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stddef.h>
 
 #include "solver.h"
@@ -171,8 +170,6 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
             v_red[index] -= 0.5f * n * (p_black[index + width] - p_black[index - width]);
         }
     }
-
-    printf("AAAAAAA");
 
     for (unsigned int y = 1; y <= n; ++y) {
         for (unsigned int x = 0; x < n/2; ++x) {
