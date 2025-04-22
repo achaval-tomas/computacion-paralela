@@ -180,6 +180,18 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
 
 static void project(unsigned int n, float * restrict u, float * restrict v, float * restrict p, float * restrict div)
 {
+    unsigned int color_size = (n + 2) * ((n + 2) / 2);
+    float * u_red = u;
+    float * u_black = u + color_size;
+    float * v_red = v;
+    float * v_black = v + color_size;
+    float * div_red = div;
+    float * div_black = div + color_size;
+    float * p_red = p;
+    float * p_black = p + color_size;
+
+    unsigned int width = (n + 2) / 2;
+    /*
 	for (unsigned int j = 1; j <= n; j++) {
 		for (unsigned int i = 1; i <= n; i++) {
             div[IX(i, j)] = -0.5f * (u[IX(i + 1, j)] - u[IX(i - 1, j)] +
@@ -187,21 +199,37 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
             p[IX(i, j)] = 0;
         }
     }
+    */
+
+    for (unsigned int y = 1; y <= n; ++y) {
+        for (unsigned int x = 0; x < n/2; ++x) {
+            int index = idx(x + ((y + 1) % 2), y, width);
+            int shift = 1 - 2 * ((y + 1) % 2);
+
+            div_red[index] = -0.5f * ((u_black[index] - u_black[index + shift]) * (-shift) +
+                                       v_black[index + width] - v_black[index - width]) / n;
+            p_red[index] = 0;
+        }
+    }
+
+    for (unsigned int y = 1; y <= n; ++y) {
+        for (unsigned int x = 0; x < n/2; ++x) {
+            int index = idx(x + (y % 2), y, width);
+            int shift = 1 - 2 * (y % 2);
+
+            div_black[index] = -0.5f * ((u_red[index] - u_red[index + shift]) * (-shift) +
+                                         v_red[index + width] - v_red[index - width]) / n;
+            p_black[index] = 0;
+        }
+    }
+
+
     set_bnd(n, NONE, div);
     set_bnd(n, NONE, p);
 
     lin_solve(n, NONE, p, div, 1, 4);
 
 
-    unsigned int color_size = (n + 2) * ((n + 2) / 2);
-    float * u_red = u;
-    float * u_black = u + color_size;
-    float * v_red = v;
-    float * v_black = v + color_size;
-    const float * p_red = p;
-    const float * p_black = p + color_size;
-
-    unsigned int width = (n + 2) / 2;
 
     for (unsigned int y = 1; y <= n; ++y) {
         for (unsigned int x = 0; x < n/2; ++x) {
