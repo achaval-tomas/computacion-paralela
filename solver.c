@@ -10,6 +10,10 @@
         x = tmp;         \
     }
 
+#ifndef BLOCK_SIZE
+#define BLOCK_SIZE 4
+#endif
+
 typedef enum { NONE = 0,
                VERTICAL = 1,
                HORIZONTAL = 2 } boundary;
@@ -38,13 +42,13 @@ static void set_bnd(unsigned int n, boundary b, float* x)
 
 static void lin_solve(unsigned int n, boundary b, float* x, const float* x0, float a, float c)
 {
-    unsigned int n_blocks = n / 8;
+    unsigned int n_blocks = n / BLOCK_SIZE;
 
     for (unsigned int k = 0; k < 20; k++) {
         for (unsigned int i_block = 0; i_block < n_blocks; i_block++) {
             for (unsigned int j_block = 0; j_block < n_blocks; j_block++) {
-                for (unsigned int i = i_block*8+1; i <= i_block*8+8; i++) {
-                    for (unsigned int j = j_block*8+1; j <= j_block*8+8; j++) {
+                for (unsigned int i = i_block*BLOCK_SIZE+1; i <= i_block*BLOCK_SIZE+BLOCK_SIZE; i++) {
+                    for (unsigned int j = j_block*BLOCK_SIZE+1; j <= j_block*BLOCK_SIZE+BLOCK_SIZE; j++) {
                         x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
                     }
                 }
