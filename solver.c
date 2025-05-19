@@ -2,6 +2,7 @@
 
 #include "solver.h"
 #include "indices.h"
+#include <omp.h>
 
 #define IX(x,y) (rb_idx((x),(y),(n+2)))
 #define SWAP(x0,x) {float * tmp=x0;x0=x;x=tmp;}
@@ -12,6 +13,7 @@ typedef enum { RED, BLACK } grid_color;
 static void add_source(unsigned int n, float * x, const float * s, float dt)
 {
     unsigned int size = (n + 2) * (n + 2);
+    #pragma omp parallel for
     for (unsigned int i = 0; i < size; i++) {
         x[i] += dt * s[i];
     }
@@ -41,6 +43,7 @@ static void lin_solve_rb_step(grid_color color,
 {
     unsigned int width = (n + 2) / 2;
 
+    #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + ((y + 1 + (color == BLACK)) % 2), y, width);
@@ -52,31 +55,7 @@ static void lin_solve_rb_step(grid_color color,
         }
     }
 }
-/*
-static void lin_solve_rb_step(grid_color color,
-                              unsigned int n,
-                              float a,
-                              float c,
-                              const float * restrict same0,
-                              const float * restrict neigh,
-                              float * restrict same)
-{
-    int shift = color == RED ? 1 : -1;
-    unsigned int start = color == RED ? 0 : 1;
 
-    unsigned int width = (n + 2) / 2;
-
-    for (unsigned int y = 1; y <= n; ++y, shift = -shift, start = 1 - start) {
-        for (unsigned int x = start; x < width - (1 - start); ++x) {
-            int index = idx(x, y, width);
-            same[index] = (same0[index] + a * (neigh[index - width] +
-                                               neigh[index] +
-                                               neigh[index + shift] +
-                                               neigh[index + width])) / c;
-        }
-    }
-}
-*/
 
 static void lin_solve(unsigned int n, boundary b,
                       float * restrict x,
@@ -114,7 +93,7 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
     for (unsigned int j = 1; j <= n; j++) {
         for (unsigned int i = 0; i < n/2; i++) {
 
-            unsigned int index = idx(i + ((j + 1) % 2), j ,width);
+            unsigned int index = idx(i + ((j + 1) % 2), j, width);
 
             x = 2*i + 1 + ((j + 1) % 2) - dt0 * u[index];
             y = j - dt0 * v[index];
@@ -148,7 +127,7 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
     for (unsigned int j = 1; j <= n; j++) {
         for (unsigned int i = 0; i < n/2; i++) {
 
-            unsigned int index = idx(i + (j % 2), j ,width);
+            unsigned int index = idx(i + (j % 2), j, width);
 
             x = 2*i + 1 + (j % 2) - dt0 * u_black[index];
             y = j - dt0 * v_black[index];
@@ -200,7 +179,7 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
         }
     }
     */
-
+    #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + ((y + 1) % 2), y, width);
@@ -212,6 +191,7 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
         }
     }
 
+    #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + (y % 2), y, width);
@@ -229,8 +209,7 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
 
     lin_solve(n, NONE, p, div, 1, 4);
 
-
-
+    #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + ((y + 1) % 2), y, width);
@@ -240,6 +219,7 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
         }
     }
 
+    #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + (y % 2), y, width);

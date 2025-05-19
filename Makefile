@@ -2,8 +2,8 @@ N?=512
 
 CC=gcc
 CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Ofast -march=native
-GCC_CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Ofast -march=native -D N_VALUE=$(N)
-CLANG_CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -O3 -ffast-math -march=native -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -D N_VALUE=$(N)
+GCC_CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Ofast -march=native -fopenmp -D N_VALUE=$(N)
+CLANG_CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -O3 -ffast-math -march=native -fopenmp -D N_VALUE=$(N)
 LDFLAGS=
 
 TARGETS=demo headless

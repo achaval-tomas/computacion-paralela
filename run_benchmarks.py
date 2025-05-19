@@ -4,9 +4,9 @@ import csv
 import re
 
 # Compilers to test
-compilers = ["./rungcc", "./runclang", "./runintel"]
+compilers = ["./rungcc", "./runclang"]
 # Values of N
-n_values = [64, 128, 256, 512, 1024]
+n_values = [2**n for n in range(6, 17)]
 # Output file
 output_file = "archp_results.csv"
 
