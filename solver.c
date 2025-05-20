@@ -83,19 +83,21 @@ static void diffuse(unsigned int n, boundary b, float * x, const float * x0, flo
 
 static void advect(unsigned int n, boundary b, float * restrict d, const float * restrict d0, const float * restrict u, const float * restrict v, float dt)
 {
-    int i0, i1, j0, j1;
-    float x, y, s0, t0, s1, t1;
-
     float dt0 = dt * n;
 
     unsigned int width = (n+2)/2;
 
+    #pragma omp parallel
     for (unsigned int j = 1; j <= n; j++) {
+        int i0, i1, j0, j1;
+        float x, y, s0, t0, s1, t1;
         for (unsigned int i = 0; i < n/2; i++) {
 
             unsigned int index = idx(i + ((j + 1) % 2), j, width);
 
+            // x = i - dt0 * u[IX(i, j)];
             x = 2*i + 1 + ((j + 1) % 2) - dt0 * u[index];
+
             y = j - dt0 * v[index];
             if (x < 0.5f) {
                 x = 0.5f;
@@ -124,7 +126,10 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
     const float * restrict v_black = v + width * (n+2);
     float * restrict d_black = d + width * (n+2);
 
+    #pragma omp parallel for
     for (unsigned int j = 1; j <= n; j++) {
+        int i0, i1, j0, j1;
+        float x, y, s0, t0, s1, t1;
         for (unsigned int i = 0; i < n/2; i++) {
 
             unsigned int index = idx(i + (j % 2), j, width);
