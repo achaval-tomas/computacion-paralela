@@ -45,6 +45,7 @@ static void lin_solve_rb_step(grid_color color,
 
     #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
+		#pragma omp simd
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + ((y + 1 + (color == BLACK)) % 2), y, width);
             int shift = 1 - 2 * ((y + 1 + (color == BLACK)) % 2);
@@ -91,6 +92,7 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
     for (unsigned int j = 1; j <= n; j++) {
         int i0, i1, j0, j1;
         float x, y, s0, t0, s1, t1;
+		#pragma omp simd
         for (unsigned int i = 0; i < n/2; i++) {
 
             unsigned int index = idx(i + ((j + 1) % 2), j, width);
@@ -130,6 +132,7 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
     for (unsigned int j = 1; j <= n; j++) {
         int i0, i1, j0, j1;
         float x, y, s0, t0, s1, t1;
+		#pragma omp simd
         for (unsigned int i = 0; i < n/2; i++) {
 
             unsigned int index = idx(i + (j % 2), j, width);
@@ -186,6 +189,7 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
     */
     #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
+		#pragma omp simd
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + ((y + 1) % 2), y, width);
             int shift = 1 - 2 * ((y + 1) % 2);
@@ -198,6 +202,7 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
 
     #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
+		#pragma omp simd
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + (y % 2), y, width);
             int shift = 1 - 2 * (y % 2);
@@ -216,6 +221,7 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
 
     #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
+		#pragma omp simd
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + ((y + 1) % 2), y, width);
             int shift = 1 - 2 * ((y + 1) % 2);
@@ -226,6 +232,7 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
 
     #pragma omp parallel for
     for (unsigned int y = 1; y <= n; ++y) {
+		#pragma omp simd
         for (unsigned int x = 0; x < n/2; ++x) {
             int index = idx(x + (y % 2), y, width);
             int shift = 1 - 2 * (y % 2);
