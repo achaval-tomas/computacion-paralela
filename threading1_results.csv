@@ -1,0 +1,10 @@
+Compiler,Num threads,N,total_cells_per_us
+./runclang,1,64,16.623104
+./runclang,1,128,17.639566
+./runclang,1,256,18.169294
+./runclang,1,512,18.17644
+./runclang,1,1024,18.415673
+./runclang,1,2048,18.131989
+./runclang,1,4096,18.092529
+./runclang,1,8192,17.708545
+./runclang,1,16384,17.704632
