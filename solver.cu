@@ -6,7 +6,7 @@
 
 #define THREADS_PER_BLOCK 256
 
-#define IX(x,y) ((x % 2) ^ (y % 2)) * (n+2) * ((n+2) / 2) + (x / 2) + y * ((n+2) / 2)
+#define IX(x,y) (((x) % 2) ^ ((y) % 2)) * (n+2) * ((n+2) / 2) + ((x) / 2) + (y) * ((n+2) / 2)
 #define SWAP(x0,x) {float * tmp=x0;x0=x;x=tmp;}
 
 typedef enum { NONE = 0, VERTICAL = 1, HORIZONTAL = 2 } boundary;
