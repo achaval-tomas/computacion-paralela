@@ -4,17 +4,17 @@ NVCC = nvcc
 NVCCFLAGS = -O3 -D N_VALUE=$(N)
 
 # Source files
-SRC = headless.c wtime.c solver.cu demo.c
+SRC = headless.cu solver.cu wtime.c demo.cu
 
 # Object files
 COMMON_OBJ = solver.o wtime.o
 
 all: $(TARGET)
 
-demo.o: demo.c
+demo.o: demo.cu
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-headless.o: headless.c
+headless.o: headless.cu
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 wtime.o: wtime.c
@@ -34,3 +34,5 @@ demo: $(COMMON_OBJ) demo.o
 clean:
 	rm -f *.o $(TARGET)
 
+cleanwin:
+	del *.o $(TARGET) *.exe *.exp *.lib

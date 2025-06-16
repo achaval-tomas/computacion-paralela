@@ -19,6 +19,7 @@
 
 #include "indices.h"
 #include "wtime.h"
+#include "solver.h"
 
 #ifndef N_VALUE
 #define N_VALUE 128
@@ -28,10 +29,6 @@
 
 #define IX(x, y) (rb_idx((x), (y), (N + 2)))
 
-/* external definitions (from solver.c) */
-
-extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
-extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt);
 
 /* global variables */
 
@@ -41,6 +38,9 @@ static float force, source;
 
 static float *u, *v, *u_prev, *v_prev;
 static float *dens, *dens_prev;
+
+static float *u_d, *v_d, *u_prev_d, *v_prev_d;
+static float *dens_d, *dens_prev_d;
 
 
 /*
@@ -70,6 +70,25 @@ static void free_data(void)
     if (dens_prev) {
         free(dens_prev);
     }
+
+    if (u_d) {
+        cudaFree(u_d);
+    }
+    if (v_d) {
+        cudaFree(v_d);
+    }
+    if (dens_d) {
+        cudaFree(dens_d);
+    }
+    if (u_prev_d) {
+        cudaFree(u_prev_d);
+    }
+    if (v_prev_d) {
+        cudaFree(v_prev_d);
+    }
+    if (dens_prev_d) {
+        cudaFree(dens_prev_d);
+    }
 }
 
 static void clear_data(void)
@@ -79,6 +98,23 @@ static void clear_data(void)
     for (i = 0; i < size; i++) {
         u[i] = v[i] = u_prev[i] = v_prev[i] = dens[i] = dens_prev[i] = 0.0f;
     }
+
+    cudaMemset(u_d, 0, size * sizeof(float));
+    cudaMemset(v_d, 0, size * sizeof(float));
+    cudaMemset(u_prev_d, 0, size * sizeof(float));
+    cudaMemset(v_prev_d, 0, size * sizeof(float));
+    cudaMemset(dens_d, 0, size * sizeof(float));
+    cudaMemset(dens_prev_d, 0, size * sizeof(float));
+}
+
+static int tryCudaMalloc(float* a, int size)
+{
+    cudaError_t err = cudaMalloc((void**)&a, size * sizeof(float));
+    if (err != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed: %s\n", cudaGetErrorString(err));
+        return (0);
+    }
+    return (1);
 }
 
 static int allocate_data(void)
@@ -97,7 +133,14 @@ static int allocate_data(void)
         return (0);
     }
 
-    return (1);
+    int err = tryCudaMalloc(u_d, size);
+    err &= tryCudaMalloc(v_d, size);
+    err &= tryCudaMalloc(u_prev_d, size);
+    err &= tryCudaMalloc(v_prev_d, size);
+    err &= tryCudaMalloc(dens_d, size);
+    err &= tryCudaMalloc(dens_prev_d, size);
+
+    return err;
 }
 
 
@@ -135,11 +178,26 @@ static void react(float* d, float* u, float* v)
 
 static void one_step()
 {
+    int size = (N + 2) * (N + 2);
+
     react(dens_prev, u_prev, v_prev);
 
-    vel_step(N, u, v, u_prev, v_prev, visc, dt);
+    // host --> device
+    cudaMemcpy(u_prev_d, u_prev, size * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(v_prev_d, v_prev, size * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(dens_prev_d, dens_prev, size * sizeof(float), cudaMemcpyHostToDevice);
 
-    dens_step(N, dens, dens_prev, u, v, diff, dt);
+    vel_step(N, u_d, v_d, u_prev_d, v_prev_d, visc, dt);
+
+    dens_step(N, dens_d, dens_prev_d, u_d, v_d, diff, dt);
+
+    // device -> host
+    cudaMemcpy(u, u_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(v, v_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(dens, dens_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(u_prev, u_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(v_prev, v_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(dens_prev, dens_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
 }
 
 
@@ -186,17 +244,17 @@ int main(int argc, char** argv)
     }
     clear_data();
 
-	double start_t_program = wtime();
+    double start_t_program = wtime();
     double start_t;
     double total = 0;
-	i = 0;
-	while (i < 2048) {
-		i++;
+    i = 0;
+    while (i < 2048) {
+        i++;
         start_t = wtime();
         one_step();
         total += (double)(3 * N * N) / (1.0e6 * (wtime() - start_t));
-		if (wtime() - start_t_program > 60)
-			break;	
+        if (wtime() - start_t_program > 60)
+            break;
     }
 
     printf("\ntotal_cells_per_us: %lf\n", total / (double)i);

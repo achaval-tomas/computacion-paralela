@@ -35,6 +35,10 @@ static int dvel;
 static float *u, *v, *u_prev, *v_prev;
 static float *dens, *dens_prev;
 
+static float *u_d, *v_d, *u_prev_d, *v_prev_d;
+static float *dens_d, *dens_prev_d;
+
+
 static int win_id;
 static int win_x, win_y;
 static int mouse_down[3];
@@ -70,6 +74,25 @@ static void free_data(void)
     if (dens_prev) {
         free(dens_prev);
     }
+
+    if (u_d) {
+        cudaFree(u_d);
+    }
+    if (v_d) {
+        cudaFree(v_d);
+    }
+    if (dens_d) {
+        cudaFree(dens_d);
+    }
+    if (u_prev_d) {
+        cudaFree(u_prev_d);
+    }
+    if (v_prev_d) {
+        cudaFree(v_prev_d);
+    }
+    if (dens_prev_d) {
+        cudaFree(dens_prev_d);
+    }
 }
 
 static void clear_data(void)
@@ -79,6 +102,23 @@ static void clear_data(void)
     for (i = 0; i < size; i++) {
         u[i] = v[i] = u_prev[i] = v_prev[i] = dens[i] = dens_prev[i] = 0.0f;
     }
+
+    cudaMemset(u_d, 0, size * sizeof(float));
+    cudaMemset(v_d, 0, size * sizeof(float));
+    cudaMemset(u_prev_d, 0, size * sizeof(float));
+    cudaMemset(v_prev_d, 0, size * sizeof(float));
+    cudaMemset(dens_d, 0, size * sizeof(float));
+    cudaMemset(dens_prev_d, 0, size * sizeof(float));
+}
+
+static int tryCudaMalloc(float* a, int size)
+{
+    cudaError_t err = cudaMalloc((void**)&a, size * sizeof(float));
+    if (err != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed: %s\n", cudaGetErrorString(err));
+        return (0);
+    }
+    return (1);
 }
 
 static int allocate_data(void)
@@ -96,6 +136,13 @@ static int allocate_data(void)
         fprintf(stderr, "cannot allocate data\n");
         return (0);
     }
+
+    int err = tryCudaMalloc(u_d, size);
+    err &= tryCudaMalloc(v_d, size);
+    err &= tryCudaMalloc(u_prev_d, size);
+    err &= tryCudaMalloc(v_prev_d, size);
+    err &= tryCudaMalloc(dens_d, size);
+    err &= tryCudaMalloc(dens_prev_d, size);
 
     return (1);
 }
@@ -299,10 +346,17 @@ static void idle_func(void)
     static double react_ns_p_cell = 0.0;
     static double vel_ns_p_cell = 0.0;
     static double dens_ns_p_cell = 0.0;
+    int size = (N + 2) * (N + 2);
+
 
     start_t = wtime();
     react(dens_prev, u_prev, v_prev);
     react_ns_p_cell += 1.0e9 * (wtime() - start_t) / (N * N);
+
+    // host --> device
+    cudaMemcpy(u_prev_d, u_prev, size * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(v_prev_d, v_prev, size * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(dens_prev_d, dens_prev, size * sizeof(float), cudaMemcpyHostToDevice);
 
     start_t = wtime();
     vel_step(N, u, v, u_prev, v_prev, visc, dt);
@@ -311,6 +365,14 @@ static void idle_func(void)
     start_t = wtime();
     dens_step(N, dens, dens_prev, u, v, diff, dt);
     dens_ns_p_cell += 1.0e9 * (wtime() - start_t) / (N * N);
+
+     // device -> host
+    cudaMemcpy(u, u_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(v, v_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(dens, dens_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(u_prev, u_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(v_prev, v_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(dens_prev, dens_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
 
     if (1.0 < wtime() - one_second) { /* at least 1s between stats */
         printf("%lf, %lf, %lf, %lf: ns per cell total, react, vel_step, dens_step\n",
