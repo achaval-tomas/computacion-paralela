@@ -108,15 +108,17 @@ static void lin_solve(unsigned int n, boundary b,
     float * blk = x + color_size;
 
     int numBlocks = (color_size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    int numBlocksSetBnd = ((n+1) + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int numBlocksSetBnd = 1;
 
     for (unsigned int k = 0; k < 20; ++k) {
         lin_solve_red_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, a, c, red0, blk, red);
+        cudaDeviceSynchronize();
         lin_solve_black_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, a, c, blk0, red, blk);
+        cudaDeviceSynchronize();
         set_bnd<<<numBlocksSetBnd, THREADS_PER_BLOCK>>>(n, b, x);
+        cudaDeviceSynchronize();
     }
 
-    cudaDeviceSynchronize();
 }
 
 static void diffuse(unsigned int n, boundary b, float * x, const float * x0, float diff, float dt)
@@ -234,14 +236,16 @@ static void advect(
     float * __restrict__ d_black = d + width * (n+2);
 
     int numBlocks = (width * (n+2) + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    int numBlocksSetBnd = ((n+1) + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int numBlocksSetBnd = 1;
 
 
     advect_red_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, d, d0, u, v, dt);
-    advect_red_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, d_black, d0, u_black, v_black, dt);
-    set_bnd<<<numBlocksSetBnd, THREADS_PER_BLOCK>>>(n, b, d);
-
     cudaDeviceSynchronize();
+    advect_black_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, d_black, d0, u_black, v_black, dt);
+    cudaDeviceSynchronize();
+    set_bnd<<<numBlocksSetBnd, THREADS_PER_BLOCK>>>(n, b, d);
+    cudaDeviceSynchronize();
+
 }
 
 __global__ void project_first_step(
@@ -314,25 +318,28 @@ static void project(
     unsigned int width = (n + 2) / 2;
 
     int numBlocks = (color_size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    int numBlocksSetBnd = ((n+1) + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int numBlocksSetBnd = 1;
 
     project_first_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, u_black, v_black, p_red, div_red, 1);
     project_first_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, u_red, v_red, p_black, div_black, 0);
+    cudaDeviceSynchronize();
 
     set_bnd<<<numBlocksSetBnd, THREADS_PER_BLOCK>>>(n, NONE, div);
     set_bnd<<<numBlocksSetBnd, THREADS_PER_BLOCK>>>(n, NONE, p);
-
     cudaDeviceSynchronize();
+
     
     lin_solve(n, NONE, p, div, 1, 4);
+    cudaDeviceSynchronize();
 
     project_second_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, u_red, v_red, p_black, 1);
     project_second_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, u_black, v_black, p_red, 0);
+    cudaDeviceSynchronize();
 
     set_bnd<<<numBlocksSetBnd, THREADS_PER_BLOCK>>>(n, VERTICAL, u);
     set_bnd<<<numBlocksSetBnd, THREADS_PER_BLOCK>>>(n, HORIZONTAL, v);
+    cudaDeviceSynchronize();
 
-    cudaDeviceSynchronize();  
 }
 
 void dens_step(unsigned int n, float *x, float *x0, float *u, float *v, float diff, float dt)
@@ -346,6 +353,7 @@ void dens_step(unsigned int n, float *x, float *x0, float *u, float *v, float di
     diffuse(n, NONE, x, x0, diff, dt);
     SWAP(x0, x);
     advect(n, NONE, x, x0, u, v, dt);
+    cudaDeviceSynchronize();
 }
 
 void vel_step(unsigned int n, float *u, float *v, float *u0, float *v0, float visc, float dt)
@@ -366,4 +374,5 @@ void vel_step(unsigned int n, float *u, float *v, float *u0, float *v0, float vi
     advect(n, VERTICAL, u, u0, u0, v0, dt);
     advect(n, HORIZONTAL, v, v0, u0, v0, dt);
     project(n, u, v, u0, v0);
+    cudaDeviceSynchronize();
 }

@@ -191,6 +191,8 @@ static void one_step()
 
     dens_step(N, dens_d, dens_prev_d, u_d, v_d, diff, dt);
 
+    cudaDeviceSynchronize();
+
     // device -> host
     cudaMemcpy(u, u_d, size * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(v, v_d, size * sizeof(float), cudaMemcpyDeviceToHost);

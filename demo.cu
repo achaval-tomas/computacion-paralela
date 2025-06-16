@@ -20,6 +20,7 @@
 
 #include "indices.h"
 #include "wtime.h"
+#include "solver.h"
 
 /* macros */
 
@@ -43,9 +44,6 @@ static int win_id;
 static int win_x, win_y;
 static int mouse_down[3];
 static int omx, omy, mx, my;
-
-extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
-extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt);
 
 /*
   ----------------------------------------------------------------------
@@ -366,6 +364,8 @@ static void idle_func(void)
     dens_step(N, dens_d, dens_prev_d, u_d, v_d, diff, dt);
     dens_ns_p_cell += 1.0e9 * (wtime() - start_t) / (N * N);
 
+    cudaDeviceSynchronize();
+
      // device -> host
     cudaMemcpy(u, u_d, size * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(v, v_d, size * sizeof(float), cudaMemcpyDeviceToHost);
@@ -459,7 +459,7 @@ int main(int argc, char** argv)
     }
 
     if (argc == 1) {
-        N = 256;
+        N = 64;
         dt = 0.1f;
         diff = 0.0f;
         visc = 0.0f;
