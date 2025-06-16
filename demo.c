@@ -397,7 +397,7 @@ int main(int argc, char** argv)
     }
 
     if (argc == 1) {
-        N = 64;
+        N = 256;
         dt = 0.1f;
         diff = 0.0f;
         visc = 0.0f;

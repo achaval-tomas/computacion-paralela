@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdio.h>
 
 #include "solver.h"
 #include "indices.h"
@@ -31,25 +32,59 @@ static void set_bnd(unsigned int n, boundary b, float * x)
     x[IX(n + 1, n + 1)] = 0.5f * (x[IX(n, n + 1)] + x[IX(n + 1, n)]);
 }
 
-static void lin_solve_rb_step(grid_color color,
-                              unsigned int n,
-                              float a,
-                              float c,
-                              const float * __restrict__ same0,
-                              const float * __restrict__ neigh,
-                              float * __restrict__ same)
-{
-    unsigned int width = (n + 2) / 2;
 
-    for (unsigned int y = 1; y <= n; ++y) {
-        for (unsigned int x = 0; x < n/2; ++x) {
-            int index = idx(x + ((y + 1 + (color == BLACK)) % 2), y, width);
-            int shift = 1 - 2 * ((y + 1 + (color == BLACK)) % 2);
-            same[index] = (same0[index] + a * (neigh[index - width] +
-                                               neigh[index] +
-                                               neigh[index + shift] +
-                                               neigh[index + width])) / c;
-        }
+__global__ void lin_solve_red_step(
+    unsigned int n,
+    float a,
+    float c,
+    const float * __restrict__ same0,
+    const float * __restrict__ neigh,
+    float * __restrict__ same
+)
+{
+    size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    if (tid < n * (n / 2)) {
+        unsigned int y = (tid / (n / 2)) + 1;
+        unsigned int x = tid % (n / 2);
+
+
+        unsigned int width = (n + 2) / 2;
+
+        int index = x + ((y + 1) % 2) + y * width;
+        int shift = 1 - 2 * ((y + 1) % 2);
+        same[index] = (same0[index] + a * (neigh[index - width] +
+                                           neigh[index] +
+                                           neigh[index + shift] +
+                                           neigh[index + width])) / c;
+    }
+}
+
+__global__ void lin_solve_black_step(
+    unsigned int n,
+    float a,
+    float c,
+    const float * __restrict__ same0,
+    const float * __restrict__ neigh,
+    float * __restrict__ same
+)
+{
+    size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (tid < n * (n / 2)) {
+        unsigned int y = (tid / (n / 2)) + 1;
+        unsigned int x = tid % (n / 2);
+
+
+        unsigned int width = (n + 2) / 2;
+
+        int index = x + (y % 2) + y * width;
+        int shift = 1 - 2 * (y % 2);
+        same[index] = (same0[index] + a * (neigh[index - width] +
+                                           neigh[index] +
+                                           neigh[index + shift] +
+                                           neigh[index + width])) / c;
+
     }
 }
 
@@ -64,11 +99,62 @@ static void lin_solve(unsigned int n, boundary b,
     float * red = x;
     float * blk = x + color_size;
 
+    float * red_d;
+    cudaError_t err = cudaMalloc((void **)&red_d, color_size * sizeof(float));
+
+    if (err != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed: %s\n", cudaGetErrorString(err));
+        return;
+    }
+
+
+    float * blk_d;
+    err = cudaMalloc((void **)&blk_d, color_size * sizeof(float));
+
+    if (err != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed: %s\n", cudaGetErrorString(err));
+        return;
+    }
+
+    float * red0_d;
+    err = cudaMalloc((void **)&red0_d, color_size * sizeof(float));
+
+    if (err != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed: %s\n", cudaGetErrorString(err));
+        return;
+    }
+
+    float * blk0_d;
+    err = cudaMalloc((void **)&blk0_d, color_size * sizeof(float));
+
+    if (err != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed: %s\n", cudaGetErrorString(err));
+        return;
+    }
+
+    cudaMemcpy(red_d, red, color_size * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(blk_d, blk, color_size * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(red0_d, red0, color_size * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(blk0_d, blk0, color_size * sizeof(float), cudaMemcpyHostToDevice);
+
+    int threadsPerBlock = 256;
+    int numBlocks = (color_size + threadsPerBlock - 1) / threadsPerBlock;
+
+
     for (unsigned int k = 0; k < 20; ++k) {
-        lin_solve_rb_step(RED,   n, a, c, red0, blk, red);
-        lin_solve_rb_step(BLACK, n, a, c, blk0, red, blk);
+        lin_solve_red_step<<<numBlocks, threadsPerBlock>>>(n, a, c, red0_d, blk_d, red_d);
+        lin_solve_black_step<<<numBlocks, threadsPerBlock>>>(n, a, c, blk0_d, red_d, blk_d);
+        cudaDeviceSynchronize();
+        cudaMemcpy(red, red_d, color_size * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(blk, blk_d, color_size * sizeof(float), cudaMemcpyDeviceToHost);
         set_bnd(n, b, x);
     }
+
+
+    cudaFree(red_d);
+    cudaFree(blk_d);
+    cudaFree(red0_d);
+    cudaFree(blk0_d);
 }
 
 static void diffuse(unsigned int n, boundary b, float * x, const float * x0, float diff, float dt)
