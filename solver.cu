@@ -224,9 +224,6 @@ static void advect(
         float dt
     )
 {
-    int i0, i1, j0, j1;
-    float x, y, s0, t0, s1, t1;
-
     float dt0 = dt * n;
 
     unsigned int width = (n+2)/2;
@@ -314,8 +311,6 @@ static void project(
     float * div_black = div + color_size;
     float * p_red = p;
     float * p_black = p + color_size;
-
-    unsigned int width = (n + 2) / 2;
 
     int numBlocks = (color_size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     int numBlocksSetBnd = 1;
