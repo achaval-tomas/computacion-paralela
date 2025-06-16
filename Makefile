@@ -4,7 +4,7 @@ NVCC = nvcc
 NVCCFLAGS = -O3 -D N_VALUE=$(N)
 
 # Source files
-SRC = headless.cu solver.cu wtime.c demo.cu
+SRC = headless.cu solver.cu wtime.cpp demo.cu
 
 # Object files
 COMMON_OBJ = solver.o wtime.o
@@ -17,7 +17,7 @@ demo.o: demo.cu
 headless.o: headless.cu
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-wtime.o: wtime.c
+wtime.o: wtime.cpp
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 solver.o: solver.cu
