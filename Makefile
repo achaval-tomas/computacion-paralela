@@ -1,49 +1,36 @@
 N?=512
+# Compiler flags
+NVCC = nvcc
+NVCCFLAGS = -O3 -D N_VALUE=$(N)
 
-CC=gcc
-CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Ofast -march=native
-GCC_CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Ofast -march=native -D N_VALUE=$(N)
-CLANG_CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -O3 -ffast-math -march=native -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -D N_VALUE=$(N)
-LDFLAGS=
+# Source files
+SRC = headless.c wtime.c solver.cu demo.c
 
-TARGETS=demo headless
-SOURCES=$(shell echo *.c)
-COMMON_OBJECTS=solver.o wtime.o
+# Object files
+COMMON_OBJ = solver.o wtime.o
 
-all: $(TARGETS)
+all: $(TARGET)
 
-all-gcc: CC=gcc
-all-gcc: CFLAGS=$(GCC_CFLAGS)
-all-gcc: $(TARGETS)
+demo.o: demo.c
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-all-clang: CC=clang
-all-clang: CFLAGS=$(CLANG_CFLAGS)
-all-clang: $(TARGETS)
+headless.o: headless.c
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-demo: demo.o $(COMMON_OBJECTS)
-	$(CC) $(CFLAGS) $^ -o $(CC)-$@ $(LDFLAGS) -lGL -lGLU -lglut
+wtime.o: wtime.c
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-headless: headless.o $(COMMON_OBJECTS)
-	$(CC) $(CFLAGS) $^ -o $(CC)-$@ $(LDFLAGS)
+solver.o: solver.cu
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-test: test.c
-	clang -O1 -ffast-math  -march=znver3 -ftree-vectorize  -Rpass=.* -Rpass-missed=.* test.c -S
+# Link everything
+headless: $(COMMON_OBJ) headless.o
+	$(NVCC) $(NVCCFLAGS) headless.o $(COMMON_OBJ) -o headless
 
-test-rb: test-rb.c
-	clang -O1 -ffast-math  -march=znver3 -ftree-vectorize  -Rpass=.* -Rpass-missed=.* test-rb.c -S
+demo: $(COMMON_OBJ) demo.o
+	$(NVCC) $(NVCCFLAGS) -lGL -lGLU -lglut demo.o $(COMMON_OBJ) -o demo
 
+# Clean rule
 clean:
-	rm -f $(addprefix *, $(TARGETS)) *.o *~ .depend *.s
+	rm -f *.o $(TARGET)
 
-.depend: *.[ch]
-	$(CC) -MM $(SOURCES) >.depend
-
-sgemm:
-	gcc -o time_sgemm time_sgemm.c -lopenblas
-
-dgemm:
-	gcc -o time_dgemm time_dgemm.c -lopenblas
-
--include .depend
-
-.PHONY: clean all

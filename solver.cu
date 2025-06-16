@@ -35,9 +35,9 @@ static void lin_solve_rb_step(grid_color color,
                               unsigned int n,
                               float a,
                               float c,
-                              const float * restrict same0,
-                              const float * restrict neigh,
-                              float * restrict same)
+                              const float * __restrict__ same0,
+                              const float * __restrict__ neigh,
+                              float * __restrict__ same)
 {
     unsigned int width = (n + 2) / 2;
 
@@ -79,8 +79,8 @@ static void lin_solve_rb_step(grid_color color,
 */
 
 static void lin_solve(unsigned int n, boundary b,
-                      float * restrict x,
-                      const float * restrict x0,
+                      float * __restrict__ x,
+                      const float * __restrict__ x0,
                       float a, float c)
 {
     unsigned int color_size = (n + 2) * ((n + 2) / 2);
@@ -102,7 +102,15 @@ static void diffuse(unsigned int n, boundary b, float * x, const float * x0, flo
     lin_solve(n, b, x, x0, a, 1 + 4 * a);
 }
 
-static void advect(unsigned int n, boundary b, float * restrict d, const float * restrict d0, const float * restrict u, const float * restrict v, float dt)
+static void advect(
+        unsigned int n, 
+        boundary b, 
+        float * __restrict__ d, 
+        const float * __restrict__ d0, 
+        const float * __restrict__ u, 
+        const float * __restrict__ v, 
+        float dt
+    )
 {
     int i0, i1, j0, j1;
     float x, y, s0, t0, s1, t1;
@@ -141,9 +149,9 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
         }
     }
 
-    const float * restrict u_black = u + width * (n+2);
-    const float * restrict v_black = v + width * (n+2);
-    float * restrict d_black = d + width * (n+2);
+    const float * __restrict__ u_black = u + width * (n+2);
+    const float * __restrict__ v_black = v + width * (n+2);
+    float * __restrict__ d_black = d + width * (n+2);
 
     for (unsigned int j = 1; j <= n; j++) {
         for (unsigned int i = 0; i < n/2; i++) {
@@ -178,7 +186,13 @@ static void advect(unsigned int n, boundary b, float * restrict d, const float *
     set_bnd(n, b, d);
 }
 
-static void project(unsigned int n, float * restrict u, float * restrict v, float * restrict p, float * restrict div)
+static void project(
+        unsigned int n, 
+        float * __restrict__ u, 
+        float * __restrict__ v, 
+        float * __restrict__ p, 
+        float * __restrict__ div
+    )
 {
     unsigned int color_size = (n + 2) * ((n + 2) / 2);
     float * u_red = u;
@@ -262,7 +276,7 @@ static void project(unsigned int n, float * restrict u, float * restrict v, floa
     set_bnd(n, HORIZONTAL, v);
 }
 
-void dens_step(unsigned int n, float *x, float *x0, float *u, float *v, float diff, float dt)
+extern "C" void dens_step(unsigned int n, float *x, float *x0, float *u, float *v, float diff, float dt)
 {
     add_source(n, x, x0, dt);
     SWAP(x0, x);
@@ -271,7 +285,7 @@ void dens_step(unsigned int n, float *x, float *x0, float *u, float *v, float di
     advect(n, NONE, x, x0, u, v, dt);
 }
 
-void vel_step(unsigned int n, float *u, float *v, float *u0, float *v0, float visc, float dt)
+extern "C" void vel_step(unsigned int n, float *u, float *v, float *u0, float *v0, float visc, float dt)
 {
     add_source(n, u, u0, dt);
     add_source(n, v, v0, dt);
