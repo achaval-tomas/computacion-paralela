@@ -107,9 +107,9 @@ static void clear_data(void)
     cudaMemset(dens_prev_d, 0, size * sizeof(float));
 }
 
-static int tryCudaMalloc(float* a, int size)
+static int tryCudaMalloc(float** a, int size)
 {
-    cudaError_t err = cudaMalloc((void**)&a, size * sizeof(float));
+    cudaError_t err = cudaMalloc((void**)a, size * sizeof(float));
     if (err != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed: %s\n", cudaGetErrorString(err));
         return (0);
@@ -133,12 +133,12 @@ static int allocate_data(void)
         return (0);
     }
 
-    int err = tryCudaMalloc(u_d, size);
-    err &= tryCudaMalloc(v_d, size);
-    err &= tryCudaMalloc(u_prev_d, size);
-    err &= tryCudaMalloc(v_prev_d, size);
-    err &= tryCudaMalloc(dens_d, size);
-    err &= tryCudaMalloc(dens_prev_d, size);
+    int err = tryCudaMalloc(&u_d, size);
+    err &= tryCudaMalloc(&v_d, size);
+    err &= tryCudaMalloc(&u_prev_d, size);
+    err &= tryCudaMalloc(&v_prev_d, size);
+    err &= tryCudaMalloc(&dens_d, size);
+    err &= tryCudaMalloc(&dens_prev_d, size);
 
     return err;
 }
