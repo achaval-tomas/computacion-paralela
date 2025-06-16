@@ -52,31 +52,6 @@ static void lin_solve_rb_step(grid_color color,
         }
     }
 }
-/*
-static void lin_solve_rb_step(grid_color color,
-                              unsigned int n,
-                              float a,
-                              float c,
-                              const float * restrict same0,
-                              const float * restrict neigh,
-                              float * restrict same)
-{
-    int shift = color == RED ? 1 : -1;
-    unsigned int start = color == RED ? 0 : 1;
-
-    unsigned int width = (n + 2) / 2;
-
-    for (unsigned int y = 1; y <= n; ++y, shift = -shift, start = 1 - start) {
-        for (unsigned int x = start; x < width - (1 - start); ++x) {
-            int index = idx(x, y, width);
-            same[index] = (same0[index] + a * (neigh[index - width] +
-                                               neigh[index] +
-                                               neigh[index + shift] +
-                                               neigh[index + width])) / c;
-        }
-    }
-}
-*/
 
 static void lin_solve(unsigned int n, boundary b,
                       float * __restrict__ x,
@@ -205,15 +180,6 @@ static void project(
     float * p_black = p + color_size;
 
     unsigned int width = (n + 2) / 2;
-    /*
-	for (unsigned int j = 1; j <= n; j++) {
-		for (unsigned int i = 1; i <= n; i++) {
-            div[IX(i, j)] = -0.5f * (u[IX(i + 1, j)] - u[IX(i - 1, j)] +
-                                     v[IX(i, j + 1)] - v[IX(i, j - 1)]) / n;
-            p[IX(i, j)] = 0;
-        }
-    }
-    */
 
     for (unsigned int y = 1; y <= n; ++y) {
         for (unsigned int x = 0; x < n/2; ++x) {
@@ -263,15 +229,6 @@ static void project(
         }
     }
 
-
-    /*
-    for (unsigned int i = 1; i <= n; i++) {
-        for (unsigned int j = 1; j <= n; j++) {
-            u[IX(i, j)] -= 0.5f * n * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
-            v[IX(i, j)] -= 0.5f * n * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
-        }
-    }
-    */
     set_bnd(n, VERTICAL, u);
     set_bnd(n, HORIZONTAL, v);
 }
