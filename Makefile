@@ -32,7 +32,7 @@ demo: $(COMMON_OBJ) demo.o
 
 # Clean rule
 clean:
-	rm -f *.o $(TARGET)
+	rm -f *.o $(TARGET) headless demo
 
 cleanwin:
 	del *.o $(TARGET) *.exe *.exp *.lib

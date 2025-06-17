@@ -26,9 +26,13 @@
 
 #define IX(x,y) (rb_idx((x),(y),(N+2)))
 
+#ifndef N_VALUE
+#define N_VALUE 128
+#endif
+
 /* global variables */
 
-static int N;
+static int N = N_VALUE;
 static float dt, diff, visc;
 static float force, source;
 static int dvel;
@@ -459,7 +463,6 @@ int main(int argc, char** argv)
     }
 
     if (argc == 1) {
-        N = 64;
         dt = 0.1f;
         diff = 0.0f;
         visc = 0.0f;
