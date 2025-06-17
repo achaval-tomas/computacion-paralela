@@ -4,11 +4,11 @@ import csv
 import re
 
 # Compilers to test
-compilers = ["./rungcc", "./runclang", "./runintel"]
+compilers = ["./runcuda"]
 # Values of N
-n_values = [64, 128, 256, 512, 1024]
+n_values = [2**i for i in range(6, 15)]
 # Output file
-output_file = "archp_results.csv"
+output_file = "atom_cuda_results.csv"
 
 # Regex pattern to extract values
 pattern = re.compile(r"total_cells_per_us: (\S+)")
