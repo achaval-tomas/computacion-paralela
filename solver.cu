@@ -108,7 +108,7 @@ static void lin_solve(unsigned int n, boundary b,
     float * blk = x + color_size;
 
     int numBlocks = (color_size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    int numBlocksSetBnd = 1;
+    int numBlocksSetBnd = (n + 1 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
     for (unsigned int k = 0; k < 20; ++k) {
         lin_solve_red_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, a, c, red0, blk, red);
@@ -233,7 +233,7 @@ static void advect(
     float * __restrict__ d_black = d + width * (n+2);
 
     int numBlocks = (width * (n+2) + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    int numBlocksSetBnd = 1;
+    int numBlocksSetBnd = (n + 1 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
 
     advect_red_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, d, d0, u, v, dt);
@@ -313,7 +313,7 @@ static void project(
     float * p_black = p + color_size;
 
     int numBlocks = (color_size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    int numBlocksSetBnd = 1;
+    int numBlocksSetBnd = (n + 1 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
     project_first_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, u_black, v_black, p_red, div_red, 1);
     project_first_step<<<numBlocks, THREADS_PER_BLOCK>>>(n, u_red, v_red, p_black, div_black, 0);
