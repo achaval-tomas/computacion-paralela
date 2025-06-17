@@ -1,7 +1,7 @@
 N?=512
 # Compiler flags
 NVCC = nvcc
-NVCCFLAGS = -O3 -D N_VALUE=$(N)
+NVCCFLAGS = -O3 -D N_VALUE=$(N) -arch=native --use_fast_math --extra-device-vectorization
 
 # Source files
 SRC = headless.cu solver.cu wtime.cpp demo.cu
