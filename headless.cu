@@ -195,11 +195,11 @@ __global__ void get_array_max(float *a, size_t size, float *result)
     }
 }
 
-__global__ void calculate_velocity2(float* res, float* u, float*v, unsigned int size){
+__global__ void calculate_velocity2(float* u, float*v, unsigned int size){
     size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (tid < size) {
-        res[tid] = u[tid]*u[tid] + v[tid]*v[tid];
+        u[tid] = u[tid]*u[tid] + v[tid]*v[tid];
     }
 }
 
@@ -220,20 +220,20 @@ __global__ void set_react(
 static void react(float* d, float* u, float* v)
 {
     int size = (N + 2) * (N + 2);
-    
-    float* velocity2;
-    tryCudaMalloc(&velocity2, size);
 
     int numBlocks = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-    calculate_velocity2<<<numBlocks, THREADS_PER_BLOCK>>>(velocity2, u, v, size);
+    calculate_velocity2<<<numBlocks, THREADS_PER_BLOCK>>>(u, v, size);
 
     float *max_velocity2, *max_density;
     tryCudaMalloc(&max_velocity2, 1);
     tryCudaMalloc(&max_density, 1);
+    
+    cudaMemset(max_velocity2, 0, sizeof(float));
+    cudaMemset(max_density, 0, sizeof(float));
 
     get_array_max<<<numBlocks, THREADS_PER_BLOCK>>>(d, size, max_density);
-    get_array_max<<<numBlocks, THREADS_PER_BLOCK>>>(velocity2, size, max_velocity2);
+    get_array_max<<<numBlocks, THREADS_PER_BLOCK>>>(u, size, max_velocity2);
 
     cudaMemset(u, 0, size * sizeof(float));
     cudaMemset(v, 0, size * sizeof(float));
