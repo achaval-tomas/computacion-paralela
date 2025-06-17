@@ -19,7 +19,7 @@ Compiler,N,Threads_per_block,total_cells_per_us
 ./runcuda,256,1024,191.640578
 ./runcuda,512,32,285.039232
 ./runcuda,512,64,363.345709
-./runcuda,512,128,256.047863
+./runcuda,512,128,397.675378
 ./runcuda,512,256,385.688727
 ./runcuda,512,512,375.829328
 ./runcuda,512,1024,368.168968
