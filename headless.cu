@@ -228,7 +228,7 @@ static void react(float* d, float* u, float* v)
     float *max_velocity2, *max_density;
     tryCudaMalloc(&max_velocity2, 1);
     tryCudaMalloc(&max_density, 1);
-    
+
     cudaMemset(max_velocity2, 0, sizeof(float));
     cudaMemset(max_density, 0, sizeof(float));
 
@@ -319,7 +319,7 @@ int main(int argc, char** argv)
         start_t = wtime();
         one_step();
         total += (double)(3 * N * N) / (1.0e6 * (wtime() - start_t));
-        if (wtime() - start_t_program > 20)
+        if (wtime() - start_t_program > 15)
             break;
     }
 

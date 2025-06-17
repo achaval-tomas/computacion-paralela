@@ -7,7 +7,7 @@ import re
 compilers = ["./runcuda"]
 # Values of N and T
 n_values = [2**i for i in range(6, 15)]
-t_values = [2**i for i in range(6, 10)]
+t_values = [2**i for i in range(5, 11)]
 # Output file
 output_file = "atom_cuda_results.csv"
 
