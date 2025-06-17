@@ -1,0 +1,1 @@
+scp * cp2025_0$@@jupiterace.famaf.unc.edu.ar:navier-stokes <&0
