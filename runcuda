@@ -1,2 +1,2 @@
 #!/bin/bash
-make clean && make headless N=$@ && ./headless
+make clean && make headless N=$1 T=$2 && ./headless
