@@ -23,12 +23,12 @@
 #include "solver.h"
 
 /* macros */
-
-#define IX(x,y) (rb_idx((x),(y),(N+2)))
-
 #ifndef N_VALUE
 #define N_VALUE 128
 #endif
+
+#define IX(x,y) (((x) % 2) ^ ((y) % 2)) * (N_VALUE+2) * ((N_VALUE+2) / 2) + ((x) / 2) + (y) * ((N_VALUE+2) / 2)
+
 
 /* global variables */
 
@@ -235,35 +235,103 @@ static void draw_density(void)
   ----------------------------------------------------------------------
 */
 
-static void react(float* d, float* u, float* v)
+__device__ static float atomicMax(float* address, float val)
 {
-    int i, j, size = (N + 2) * (N + 2);
+    int* address_as_i = (int*) address;
+    int old = *address_as_i, assumed;
+    do {
+        assumed = old;
+        old = ::atomicCAS(address_as_i, assumed,
+            __float_as_int(::fmaxf(val, __int_as_float(assumed))));
+    } while (assumed != old);
+    return __int_as_float(old);
+}
 
-    float max_velocity2 = 0.0f;
-    float max_density = 0.0f;
+__global__ void get_array_max(float *a, size_t size, float *result)
+{
+    __shared__ float partial_max;
 
-    max_velocity2 = max_density = 0.0f;
-    for (i = 0; i < size; i++) {
-        if (max_velocity2 < u[i] * u[i] + v[i] * v[i]) {
-            max_velocity2 = u[i] * u[i] + v[i] * v[i];
-        }
-        if (max_density < d[i]) {
-            max_density = d[i];
-        }
+    size_t gtid = blockIdx.x * blockDim.x + threadIdx.x;	//global id
+    size_t tid  = threadIdx.x;		// thread id, dentro del bloque
+    size_t lid  = tid%warpSize;		// lane id, dentro del warp
+
+    // Fase 1, inicialización
+    if (tid==0)
+    	partial_max = 0.0f;
+    __syncthreads();
+
+    // Fase 2, cómputo dentro del bloque
+    float warp_reduce = a[gtid];
+
+    // Fase 2.1, max en warp
+    #define FULL_MASK 0xffffffff
+    warp_reduce = max(__shfl_down_sync(FULL_MASK, warp_reduce, 16), warp_reduce);
+    warp_reduce = max(__shfl_down_sync(FULL_MASK, warp_reduce, 8), warp_reduce);
+    warp_reduce = max(__shfl_down_sync(FULL_MASK, warp_reduce, 4), warp_reduce);
+    warp_reduce = max(__shfl_down_sync(FULL_MASK, warp_reduce, 2), warp_reduce);
+    warp_reduce = max(__shfl_down_sync(FULL_MASK, warp_reduce, 1), warp_reduce);
+
+    // Fase 2.2, acumulacion a shared
+    if (lid==0) {
+        atomicMax(&partial_max, warp_reduce);
     }
+    __syncthreads();
 
-    for (i = 0; i < size; i++) {
-        u[i] = v[i] = d[i] = 0.0f;
+    // Fase 3, acumulación del resultado local del bloque en la global
+    if (tid==0) {
+        atomicMax(result, partial_max);
     }
+}
 
-    if (max_velocity2 < 0.0000005f) {
+__global__ void calculate_velocity2(float* res, float* u, float*v, unsigned int size){
+    size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (tid < size) {
+        res[tid] = u[tid]*u[tid] + v[tid]*v[tid];
+    }
+}
+
+__global__ void set_react(
+    float *u, float *v, float *d,
+    float* max_velocity2, float* max_density,
+    int N, float force, float source
+){
+    if (*max_velocity2 < 0.0000005f) {
         u[IX(N / 2, N / 2)] = force * 10.0f;
         v[IX(N / 2, N / 2)] = force * 10.0f;
     }
-    if (max_density < 1.0f) {
+    if (*max_density < 1.0f) {
         d[IX(N / 2, N / 2)] = source * 10.0f;
     }
+}
 
+static void react(float* d, float* u, float* v)
+{
+    int i, j, size = (N + 2) * (N + 2);
+    
+    float* velocity2;
+    tryCudaMalloc(&velocity2, size);
+
+    int threads_per_block = 256;
+    int numBlocks = (size + threads_per_block - 1) / threads_per_block;
+
+    calculate_velocity2<<<numBlocks, threads_per_block>>>(velocity2, u, v, size);
+
+    float *max_velocity2, *max_density;
+    tryCudaMalloc(&max_velocity2, 1);
+    tryCudaMalloc(&max_density, 1);
+
+    get_array_max<<<numBlocks, threads_per_block>>>(d, size, max_density);
+    get_array_max<<<numBlocks, threads_per_block>>>(velocity2, size, max_velocity2);
+
+    cudaMemset(u, 0, size * sizeof(float));
+    cudaMemset(v, 0, size * sizeof(float));
+    cudaMemset(d, 0, size * sizeof(float));
+
+    set_react<<<1, 1>>>(u, v, d, max_velocity2, max_density, N, force, source);
+
+    cudaFree(max_velocity2); cudaFree(max_density);
+    
     if (!mouse_down[0] && !mouse_down[2]) {
         return;
     }
@@ -276,12 +344,14 @@ static void react(float* d, float* u, float* v)
     }
 
     if (mouse_down[0]) {
-        u[IX(i, j)] = force * (mx - omx);
-        v[IX(i, j)] = force * (omy - my);
+        float val = force * (mx - omx);
+        cudaMemcpy(&u[IX(i, j)], &val, sizeof(float), cudaMemcpyHostToDevice);
+        val = force * (omy - my);
+        cudaMemcpy(&v[IX(i, j)], &val, sizeof(float), cudaMemcpyHostToDevice);
     }
 
     if (mouse_down[2]) {
-        d[IX(i, j)] = source;
+        cudaMemcpy(&d[IX(i, j)], &source, sizeof(float), cudaMemcpyHostToDevice);
     }
 
     omx = mx;
@@ -352,13 +422,8 @@ static void idle_func(void)
 
 
     start_t = wtime();
-    react(dens_prev, u_prev, v_prev);
+    react(dens_prev_d, u_prev_d, v_prev_d);
     react_ns_p_cell += 1.0e9 * (wtime() - start_t) / (N * N);
-
-    // host --> device
-    cudaMemcpy(u_prev_d, u_prev, size * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(v_prev_d, v_prev, size * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(dens_prev_d, dens_prev, size * sizeof(float), cudaMemcpyHostToDevice);
 
     start_t = wtime();
     vel_step(N, u_d, v_d, u_prev_d, v_prev_d, visc, dt);
