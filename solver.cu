@@ -4,7 +4,9 @@
 #include "solver.h"
 #include "indices.h"
 
+#ifndef THREADS_PER_BLOCK
 #define THREADS_PER_BLOCK 256
+#endif
 
 #define IX(x,y) (((x) % 2) ^ ((y) % 2)) * (n+2) * ((n+2) / 2) + ((x) / 2) + (y) * ((n+2) / 2)
 #define SWAP(x0,x) {float * tmp=x0;x0=x;x=tmp;}

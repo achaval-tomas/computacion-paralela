@@ -21,6 +21,10 @@
 #include "wtime.h"
 #include "solver.h"
 
+#ifndef THREADS_PER_BLOCK
+#define THREADS_PER_BLOCK 256
+#endif
+
 #ifndef N_VALUE
 #define N_VALUE 128
 #endif
@@ -220,17 +224,16 @@ static void react(float* d, float* u, float* v)
     float* velocity2;
     tryCudaMalloc(&velocity2, size);
 
-    int threads_per_block = 256;
-    int numBlocks = (size + threads_per_block - 1) / threads_per_block;
+    int numBlocks = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-    calculate_velocity2<<<numBlocks, threads_per_block>>>(velocity2, u, v, size);
+    calculate_velocity2<<<numBlocks, THREADS_PER_BLOCK>>>(velocity2, u, v, size);
 
     float *max_velocity2, *max_density;
     tryCudaMalloc(&max_velocity2, 1);
     tryCudaMalloc(&max_density, 1);
 
-    get_array_max<<<numBlocks, threads_per_block>>>(d, size, max_density);
-    get_array_max<<<numBlocks, threads_per_block>>>(velocity2, size, max_velocity2);
+    get_array_max<<<numBlocks, THREADS_PER_BLOCK>>>(d, size, max_density);
+    get_array_max<<<numBlocks, THREADS_PER_BLOCK>>>(velocity2, size, max_velocity2);
 
     cudaMemset(u, 0, size * sizeof(float));
     cudaMemset(v, 0, size * sizeof(float));
