@@ -442,9 +442,6 @@ static void idle_func(void)
     cudaMemcpy(u, u_d, size * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(v, v_d, size * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(dens, dens_d, size * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(u_prev, u_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(v_prev, v_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(dens_prev, dens_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
 
     if (1.0 < wtime() - one_second) { /* at least 1s between stats */
         printf("%lf, %lf, %lf, %lf: ns per cell total, react, vel_step, dens_step\n",

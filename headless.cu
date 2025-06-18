@@ -261,9 +261,6 @@ static void one_step()
     cudaMemcpy(u, u_d, size * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(v, v_d, size * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(dens, dens_d, size * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(u_prev, u_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(v_prev, v_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(dens_prev, dens_prev_d, size * sizeof(float), cudaMemcpyDeviceToHost);
 }
 
 
